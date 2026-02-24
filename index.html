@@ -1,40 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Show on scroll</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visit Consent Demo</title>
+<style>
+body{font-family:system-ui;background:#0b1220;color:#e6f7ff;display:flex;align-items:center;justify-content:center;height:100vh}
+.box{background:#111a2e;border:1px solid #2dd4bf55;padding:24px;border-radius:14px;max-width:520px}
+button{margin-top:12px;padding:10px 16px;border-radius:10px;border:1px solid #2dd4bf66;background:#2dd4bf22;color:#9ffaf0;cursor:pointer}
+.small{opacity:.8;font-size:13px;margin-top:8px}
+</style>
 </head>
 <body>
-    <section id="home">
-        <h1 class="left-to-right show-on-scroll">Nodemy</h1>
-        <div class="desc left-to-right show-on-scroll">Viết một đoạn văn ngắn khoảng 5 đến 7 câu tả cảnh quê hương em trong đó có một vài câu đặc biệt gồm các đoạn văn ngắn do VnDoc biên soạn và tổng hợp. Nhằm giúp các em có nhiều đoạn văn mẫu hay và đa dạng để tham khảo khi học tập môn Ngữ văn lớp 7.</div>
-    </section>
-    <section id="about">
-        <div class="box left-to-right show-on-scroll">
-            <div class="title">Title</div>
-            <div class="desc">Viết một đoạn văn ngắn khoảng 5 đến 7 câu tả cảnh quê hương em trong đó có một vài câu đặc biệt gồm các đoạn văn ngắn do VnDoc biên soạn và tổng hợp. Nhằm giúp các em có nhiều đoạn văn mẫu hay và đa dạng để tham khảo khi học tập môn Ngữ văn lớp 7.</div>
-        </div>
-        <div class="box right-to-left show-on-scroll">
-            <div class="title">Title</div>
-            <div class="desc">Viết một đoạn văn ngắn khoảng 5 đến 7 câu tả cảnh quê hương em trong đó có một vài câu đặc biệt gồm các đoạn văn ngắn do VnDoc biên soạn và tổng hợp. Nhằm giúp các em có nhiều đoạn văn mẫu hay và đa dạng để tham khảo khi học tập môn Ngữ văn lớp 7.</div>
-        </div>
-    </section>
-    <section id="team">
-        <div class="member zoom show-on-scroll">
-            <div class="name">Name1</div>
-            <div class="desc">Viết một đoạn văn ngắn khoảng 5 đến 7 câu tả cảnh quê hương em trong đó có một vài câu đặc biệt gồm các đoạn văn ngắn do VnDoc biên soạn và tổng hợp. Nhằm giúp các em có nhiều đoạn văn mẫu hay và đa dạng để tham khảo khi học tập môn Ngữ văn lớp 7.</div>
-        </div>
-        <div class="member zoom show-on-scroll">
-            <div class="name">Name2</div>
-            <div class="desc">Viết một đoạn văn ngắn khoảng 5 đến 7 câu tả cảnh quê hương em trong đó có một vài câu đặc biệt gồm các đoạn văn ngắn do VnDoc biên soạn và tổng hợp. Nhằm giúp các em có nhiều đoạn văn mẫu hay và đa dạng để tham khảo khi học tập môn Ngữ văn lớp 7.</div>
-        </div>
-        <div class="member zoom show-on-scroll">
-            <div class="name">Name3</div>
-            <div class="desc">Viết một đoạn văn ngắn khoảng 5 đến 7 câu tả cảnh quê hương em trong đó có một vài câu đặc biệt gồm các đoạn văn ngắn do VnDoc biên soạn và tổng hợp. Nhằm giúp các em có nhiều đoạn văn mẫu hay và đa dạng để tham khảo khi học tập môn Ngữ văn lớp 7.</div>
-        </div>
-    </section>
+<div class="box">
+  <h2>Thông báo quyền riêng tư</h2>
+  <p>Trang có thể ghi nhận IP public của bạn cho mục đích thống kê học tập. Chỉ thực hiện khi bạn đồng ý.</p>
+  <button id="agree">Tôi đồng ý</button>
+  <div id="status" class="small"></div>
+</div>
+
+<script>
+// băm ẩn danh đơn giản (SHA-256)
+async function hashText(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+document.getElementById("agree").onclick = async () => {
+  const status = document.getElementById("status");
+  status.textContent = "Đang lấy IP...";
+
+  try{
+    // dịch vụ trả IP public (chỉ dùng cho demo)
+    const res = await fetch("https://api.ipify.org?format=json");
+    const data = await res.json();
+    const ip = data.ip;
+
+    // lưu bản băm thay vì IP thô (tốt cho riêng tư)
+    const anon = await hashText(ip);
+
+    // lưu local (demo). Thực tế bạn có thể gửi lên server của mình.
+    const logs = JSON.parse(localStorage.getItem("visit_logs") || "[]");
+    logs.push({ anon_ip: anon, time: new Date().toISOString() });
+    localStorage.setItem("visit_logs", JSON.stringify(logs));
+
+    status.textContent = "Đã ghi nhận ẩn danh. Cảm ơn!";
+  }catch(e){
+    status.textContent = "Không lấy được IP.";
+  }
+};
+</script>
 </body>
-<script src="app.js"></script>
 </html>
